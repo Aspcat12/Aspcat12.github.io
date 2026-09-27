@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1b1b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TXT Reader">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>TXT Reader</title>
+
+  <style>
+    :root {
+      --bg: #f8f4eb;
+      --card: #ffffff;
+      --text: #25211b;
+      --muted: #736d64;
+      --line: #e6ded0;
+      --accent: #9b612d;
+      --reader-size: 20px;
+      --reader-line-height: 2;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #151515;
+      --card: #202020;
+      --text: #eeeeee;
+      --muted: #b6b6b6;
+      --line: #393939;
+      --accent: #e4a96e;
+    }
+
+    body[data-theme="sepia"] {
+      --bg: #efe1c4;
+      --card: #f8edda;
+      --text: #4b3925;
+      --muted: #79634a;
+      --line: #d6bd98;
+      --accent: #8d4b22;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans Thai", "Sarabun", sans-serif;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      max-width: 820px;
+      margin: auto;
+      min-height: 100vh;
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0 20px;
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 0;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--accent);
+      color: white;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-weight: 700;
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .button.danger {
+      color: #b52323;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .row.between {
+      justify-content: space-between;
+    }
+
+    .book-item, .chapter-item, .history-item {
+      width: 100%;
+      text-align: left;
+      padding: 14px 0;
+      color: var(--text);
+      background: transparent;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .book-item:last-child, .chapter-item:last-child, .history-item:last-child {
+      border-bottom: 0;
+    }
+
+    .item-title {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .item-meta {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress {
+      height: 6px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--line);
+      margin-top: 9px;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 30px 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .reader-shell {
+      max-width: 720px;
+      margin: 0 auto;
+      padding-bottom: 110px;
+    }
+
+    .reader-header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 10px 0;
+      background: color-mix(in srgb, var(--bg) 94%, transparent);
+      backdrop-filter: blur(12px);
+    }
+
+    .reader-title {
+      text-align: center;
+      font-size: 16px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 8px 50px;
+    }
+
+    .reader-content {
+      font-size: var(--reader-size);
+      line-height: var(--reader-line-height);
+      letter-spacing: 0.01em;
+      word-break: break-word;
+    }
+
+    .reader-content h2 {
+      font-size: 1.15em;
+      line-height: 1.55;
+      text-align: center;
+      margin: 25px 0 36px;
+    }
+
+    .reader-content p {
+      margin: 0 0 1em;
+      text-indent: 1.5em;
+    }
+
+    .reader-content p.separator {
+      color: var(--muted);
+      text-align: center;
+      text-indent: 0;
+      letter-spacing: 4px;
+    }
+
+    .reader-bottom {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+      background: color-mix(in srgb, var(--bg) 94%, transparent);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    .reader-bottom-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      max-width: 720px;
+      margin: auto;
+    }
+
+    .icon-button {
+      flex: 1;
+      padding: 11px 8px;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-weight: 650;
+    }
+
+    .reader-back {
+      position: absolute;
+      left: 0;
+      top: 10px;
+    }
+
+    .reader-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tool {
+      padding: 8px 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--text);
+      background: var(--card);
+    }
+
+    input[type="search"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 12px;
+      outline: none;
+      margin-bottom: 10px;
+    }
+
+    .chapter-number {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .modal {
+      position: fixed;
+      z-index: 30;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      background: rgba(0, 0, 0, 0.38);
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-height: 82vh;
+      overflow: auto;
+      background: var(--bg);
+      border-radius: 20px 20px 0 0;
+      padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .modal-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    select {
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+    }
+
+    #fileInput {
+      display: none;
+    }
+  </style>
+</head>
+
+<body data-theme="sepia">
+  <main class="app">
+    <section id="libraryView">
+      <header class="topbar">
+        <div>
+          <h1>ชั้นหนังสือ</h1>
+          <div class="muted">เก็บเนื้อหาและประวัติไว้ในเครื่องนี้</div>
+        </div>
+        <label class="button" for="fileInput">นำเข้า TXT</label>
+        <input id="fileInput" type="file" accept=".txt,text/plain" multiple>
+      </header>
+
+      <div id="libraryContent"></div>
+    </section>
+
+    <section id="readerView" class="hidden">
+      <div class="reader-shell">
+        <header class="reader-header">
+          <button class="tool reader-back" id="backButton">‹ กลับ</button>
+          <div class="reader-title" id="readerBookTitle"></div>
+          <div class="reader-tools">
+            <button class="tool" id="tocButton">สารบัญ</button>
+            <button class="tool" id="bookmarkButton">คั่นหน้า</button>
+            <button class="tool" id="settingsButton">รูปแบบอ่าน</button>
+          </div>
+        </header>
+
+        <article class="reader-content" id="readerContent"></article>
+      </div>
+
+      <footer class="reader-bottom">
+        <div class="reader-bottom-inner">
+          <button class="icon-button" id="previousButton">‹ ตอนก่อน</button>
+          <button class="icon-button" id="nextButton">ตอนถัดไป ›</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-panel" id="modalPanel"></div>
+  </div>
+
+  <script>
+    const DB_NAME = "ThaiTXTReaderDB";
+    const STORE_NAME = "books";
+    let currentBook = null;
+    let currentChapterIndex = 0;
+    let saveTimer = null;
+
+    const settings = JSON.parse(localStorage.getItem("readerSettings") || JSON.stringify({
+      theme: "sepia",
+      fontSize: 20,
+      lineHeight: 2
+    }));
+
+    function applySettings() {
+      document.body.dataset.theme = settings.theme;
+      document.documentElement.style.setProperty("--reader-size", settings.fontSize + "px");
+      document.documentElement.style.setProperty("--reader-line-height", settings.lineHeight);
+      localStorage.setItem("readerSettings", JSON.stringify(settings));
+    }
+
+    applySettings();
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+
+        request.onupgradeneeded = () => {
+          if (!request.result.objectStoreNames.contains(STORE_NAME)) {
+            request.result.createObjectStore(STORE_NAME, { keyPath: "id" });
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function getAllBooks() {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const request = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveBook(book) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readwrite");
+        transaction.objectStore(STORE_NAME).put(book);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    async function deleteBook(id) {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, "readwrite");
+        transaction.objectStore(STORE_NAME).delete(id);
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    function escapeHTML(text = "") {
+      const el = document.createElement("div");
+      el.textContent = text;
+      return el.innerHTML;
+    }
+
+    function createId() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function getBookTitle(fileNames) {
+      const title = prompt(
+        "ตั้งชื่อหนังสือ",
+        fileNames.length === 1
+          ? fileNames[0].replace(/\.[^/.]+$/, "")
+          : "นิยายที่นำเข้า"
+      );
+      return title?.trim() || "หนังสือไม่มีชื่อ";
+    }
+
+    function parseChapters(rawText) {
+      const lines = rawText.replace(/\r\n?/g, "\n").split("\n");
+      const chapters = [];
+      let activeChapter = null;
+      let introLines = [];
+
+      // รองรับ: ตอนที่ 746: ชื่อตอน / บทที่ 747 : ชื่อตอน
+      const headingPattern = /^\s*(ตอน|บท)ที่\s*(\d+)\s*[:：]?\s*(.*?)\s*$/u;
+
+      for (const line of lines) {
+        const match = line.match(headingPattern);
+
+        if (match) {
+          if (activeChapter) {
+            activeChapter.content = activeChapter.content.join("\n").trim();
+            chapters.push(activeChapter);
+          } else if (introLines.join("").trim()) {
+            chapters.push({
+              id: "intro",
+              number: 0,
+              title: "บทนำ",
+              content: introLines.join("\n").trim()
+            });
+          }
+
+          activeChapter = {
+            id: `chapter-${match[2]}-${chapters.length}`,
+            number: Number(match[2]),
+            title: match[3] || `ตอนที่ ${match[2]}`,
+            content: []
+          };
+        } else if (activeChapter) {
+          activeChapter.content.push(line);
+        } else {
+          introLines.push(line);
+        }
+      }
+
+      if (activeChapter) {
+        activeChapter.content = activeChapter.content.join("\n").trim();
+        chapters.push(activeChapter);
+      }
+
+      if (!chapters.length && rawText.trim()) {
+        chapters.push({
+          id: "chapter-1",
+          number: 1,
+          title: "เนื้อหา",
+          content: rawText.trim()
+        });
+      }
+
+      return chapters;
+    }
+
+    function formatChapterContent(content) {
+      const paragraphs = content
+        .split(/\n\s*\n|\n(?=\s*[“"«])/u)
+        .map(text => text.trim())
+        .filter(Boolean);
+
+      return paragraphs.map(text => {
+        const isSeparator = /^[.….\-—_]{5,}$/u.test(text);
+        return `<p class="${isSeparator ? "separator" : ""}">${escapeHTML(text)}</p>`;
+      }).join("");
+    }
+
+    function getProgressPercent(book) {
+      if (!book?.chapters?.length || !book.progress?.chapterId) return 0;
+      const index = book.chapters.findIndex(item => item.id === book.progress.chapterId);
+      if (index < 0) return 0;
+      const chapterPart = Math.min(Math.max(book.progress.scrollRatio || 0, 0), 1);
+      return Math.round(((index + chapterPart) / book.chapters.length) * 100);
+    }
+
+    async function renderLibrary() {
+      const books = await getAllBooks();
+      books.sort((a, b) => (b.progress?.updatedAt || b.createdAt) - (a.progress?.updatedAt || a.createdAt));
+
+      const content = document.getElementById("libraryContent");
+
+      if (!books.length) {
+        content.innerHTML = `
+          <div class="card empty">
+            <strong>ยังไม่มีหนังสือ</strong><br>
+            กด “นำเข้า TXT” แล้วเลือกไฟล์จากแอป Files ได้เลย<br><br>
+            เลือกหลายไฟล์ได้ โดยเลือกตามลำดับตอนที่ต้องการรวม
+          </div>
+        `;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="card">
+          <h2>อ่านล่าสุด</h2>
+          ${books.slice(0, 5).map(book => {
+            const chapter = book.chapters.find(c => c.id === book.progress?.chapterId);
+            const percent = getProgressPercent(book);
+
+            return `
+              <button class="history-item" data-open="${book.id}">
+                <span class="item-title">${escapeHTML(book.title)}</span>
+                <span class="item-meta">
+                  ${chapter ? `ล่าสุด: ตอนที่ ${chapter.number} ${escapeHTML(chapter.title)}` : "ยังไม่ได้เริ่มอ่าน"}
+                </span>
+                <div class="progress"><span style="width:${percent}%"></span></div>
+              </button>
+            `;
+          }).join("")}
+        </div>
+
+        <div class="card">
+          <div class="row between">
+            <h2>หนังสือทั้งหมด</h2>
+            <span class="muted">${books.length} เล่ม</span>
+          </div>
+          ${books.map(book => `
+            <div class="book-item">
+              <button style="width:calc(100% - 72px); text-align:left; background:transparent; color:inherit;" data-open="${book.id}">
+                <span class="item-title">${escapeHTML(book.title)}</span>
+                <span class="item-meta">${book.chapters.length} ตอน · อ่านแล้ว ${getProgressPercent(book)}%</span>
+              </button>
+              <button class="tool" data-delete="${book.id}" aria-label="ลบหนังสือ">ลบ</button>
+            </div>
+          `).join("")}
+        </div>
+      `;
+
+      document.querySelectorAll("[data-open]").forEach(button => {
+        button.addEventListener("click", () => openBook(button.dataset.open));
+      });
+
+      document.querySelectorAll("[data-delete]").forEach(button => {
+        button.addEventListener("click", async () => {
+          if (confirm("ต้องการลบหนังสือเล่มนี้ออกจากเครื่องใช่หรือไม่?")) {
+            await deleteBook(button.dataset.delete);
+            renderLibrary();
+          }
+        });
+      });
+    }
+
+    async function openBook(bookId, requestedChapterId = null) {
+      const books = await getAllBooks();
+      currentBook = books.find(book => book.id === bookId);
+      if (!currentBook) return;
+
+      const savedIndex = currentBook.chapters.findIndex(chapter =>
+        chapter.id === (requestedChapterId || currentBook.progress?.chapterId)
+      );
+
+      currentChapterIndex = savedIndex >= 0 ? savedIndex : 0;
+
+      document.getElementById("libraryView").classList.add("hidden");
+      document.getElementById("readerView").classList.remove("hidden");
+      renderCurrentChapter(true);
+    }
+
+    function renderCurrentChapter(restorePosition = false) {
+      const chapter = currentBook.chapters[currentChapterIndex];
+      document.getElementById("readerBookTitle").textContent = currentBook.title;
+      document.getElementById("readerContent").innerHTML = `
+        <h2 id="${chapter.id}">ตอนที่ ${chapter.number}${chapter.title ? `: ${escapeHTML(chapter.title)}` : ""}</h2>
+        ${formatChapterContent(chapter.content)}
+      `;
+
+      document.getElementById("previousButton").disabled = currentChapterIndex === 0;
+      document.getElementById("nextButton").disabled = currentChapterIndex === currentBook.chapters.length - 1;
+
+      const hash = new URLSearchParams({
+        book: currentBook.id,
+        chapter: chapter.id
+      });
+      history.replaceState(null, "", `#${hash.toString()}`);
+
+      const isSavedChapter = currentBook.progress?.chapterId === chapter.id;
+
+      setTimeout(() => {
+        window.scrollTo({
+          top: restorePosition && isSavedChapter ? (currentBook.progress.scrollY || 0) : 0,
+          behavior: "instant"
+        });
+      }, 30);
+
+      saveReadingProgress();
+    }
+
+    function saveReadingProgress() {
+      if (!currentBook) return;
+
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(async () => {
+        const chapter = currentBook.chapters[currentChapterIndex];
+        const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+
+        currentBook.progress = {
+          chapterId: chapter.id,
+          scrollY: window.scrollY,
+          scrollRatio: Math.min(window.scrollY / maxScroll, 1),
+          updatedAt: Date.now()
+        };
+
+        await saveBook(currentBook);
+      }, 650);
+    }
+
+    function showTOC() {
+      const chapterList = currentBook.chapters.map((chapter, index) => `
+        <button class="chapter-item" data-chapter-index="${index}">
+          <span class="item-title">
+            <span class="chapter-number">ตอนที่ ${chapter.number}</span>
+            ${escapeHTML(chapter.title)}
+          </span>
+          <span class="item-meta">${chapter.id === currentBook.progress?.chapterId ? "กำลังอ่านล่าสุด" : ""}</span>
+        </button>
+      `).join("");
+
+      showModal(`
+        <div class="modal-title">
+          <h2>สารบัญ</h2>
+          <button class="tool" data-close>ปิด</button>
+        </div>
+        <input type="search" id="chapterSearch" placeholder="ค้นหาเลขตอนหรือชื่อตอน">
+        <div id="chapterList">${chapterList}</div>
+      `);
+
+      document.querySelectorAll("[data-chapter-index]").forEach(button => {
+        button.addEventListener("click", () => {
+          currentChapterIndex = Number(button.dataset.chapterIndex);
+          closeModal();
+          renderCurrentChapter(false);
+        });
+      });
+
+      document.getElementById("chapterSearch").addEventListener("input", event => {
+        const keyword = event.target.value.toLowerCase().trim();
+
+        document.querySelectorAll("[data-chapter-index]").forEach(button => {
+          button.classList.toggle("hidden", !button.textContent.toLowerCase().includes(keyword));
+        });
+      });
+    }
+
+    function addBookmark() {
+      const chapter = currentBook.chapters[currentChapterIndex];
+      const note = prompt("บันทึกโน้ตสำหรับคั่นหน้านี้ (เว้นว่างได้)") ?? "";
+      const maxScroll = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
+
+      currentBook.bookmarks = currentBook.bookmarks || [];
+      currentBook.bookmarks.unshift({
+        id: createId(),
+        chapterId: chapter.id,
+        chapterNumber: chapter.number,
+        chapterTitle: chapter.title,
+        scrollY: window.scrollY,
+        scrollRatio: window.scrollY / maxScroll,
+        note: note.trim(),
+        createdAt: Date.now()
+      });
+
+      saveBook(currentBook);
+      alert("บันทึกคั่นหน้าแล้ว");
+    }
+
+    function showSettings() {
+      showModal(`
+        <div class="modal-title">
+          <h2>รูปแบบการอ่าน</h2>
+          <button class="tool" data-close>ปิด</button>
+        </div>
+
+        <div class="settings-row">
+          <span>ธีม</span>
+          <select id="themeSetting">
+            <option value="light">สว่าง</option>
+            <option value="sepia">ซีเปีย</option>
+            <option value="dark">มืด</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <span>ขนาดตัวอักษร</span>
+          <div class="row">
+            <button class="tool" id="fontDown">A−</button>
+            <strong id="fontValue">${settings.fontSize}</strong>
+            <button class="tool" id="fontUp">A+</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <span>ระยะห่างบรรทัด</span>
+          <select id="lineSetting">
+            <option value="1.7">กระชับ</option>
+            <option value="2">ปกติ</option>
+            <option value="2.3">โปร่ง</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px">
+          <button class="button secondary" id="showBookmarks">ดูคั่นหน้าทั้งหมด</button>
+        </div>
+      `);
+
+      const theme = document.getElementById("themeSetting");
+      const line = document.getElementById("lineSetting");
+      theme.value = settings.theme;
+      line.value = settings.lineHeight;
+
+      theme.addEventListener("change", () => {
+        settings.theme = theme.value;
+        applySettings();
+      });
+
+      line.addEventListener("change", () => {
+        settings.lineHeight = Number(line.value);
+        applySettings();
+      });
+
+      document.getElementById("fontDown").addEventListener("click", () => {
+        settings.fontSize = Math.max(14, settings.fontSize - 1);
+        document.getElementById("fontValue").textContent = settings.fontSize;
+        applySettings();
+      });
+
+      document.getElementById("fontUp").addEventListener("click", () => {
+        settings.fontSize = Math.min(34, settings.fontSize + 1);
+        document.getElementById("fontValue").textContent = settings.fontSize;
+        applySettings();
+      });
+
+      document.getElementById("showBookmarks").addEventListener("click", showBookmarks);
+    }
+
+    function showBookmarks() {
+      const bookmarks = currentBook.bookmarks || [];
+
+      showModal(`
+        <div class="modal-title">
+          <h2>คั่นหน้า</h2>
+          <button class="tool" data-close>ปิด</button>
+        </div>
+        ${bookmarks.length ? bookmarks.map(bookmark => `
+          <button class="chapter-item" data-bookmark="${bookmark.id}">
+            <span class="item-title">ตอนที่ ${bookmark.chapterNumber}: ${escapeHTML(bookmark.chapterTitle)}</span>
+            <span class="item-meta">${escapeHTML(bookmark.note || "ไม่มีโน้ต")}</span>
+          </button>
+        `).join("") : `<div class="empty">ยังไม่มีคั่นหน้า</div>`}
+      `);
+
+      document.querySelectorAll("[data-bookmark]").forEach(button => {
+        button.addEventListener("click", () => {
+          const bookmark = currentBook.bookmarks.find(item => item.id === button.dataset.bookmark);
+          const index = currentBook.chapters.findIndex(item => item.id === bookmark.chapterId);
+
+          if (index >= 0) {
+            currentChapterIndex = index;
+            closeModal();
+            renderCurrentChapter(false);
+            setTimeout(() => window.scrollTo({ top: bookmark.scrollY, behavior: "instant" }), 60);
+          }
+        });
+      });
+    }
+
+    function showModal(content) {
+      const modal = document.getElementById("modal");
+      document.getElementById("modalPanel").innerHTML = content;
+      modal.classList.remove("hidden");
+
+      const close = document.querySelector("[data-close]");
+      if (close) close.addEventListener("click", closeModal);
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.add("hidden");
+    }
+
+    document.getElementById("fileInput").addEventListener("change", async event => {
+      const files = [...event.target.files];
+
+      if (!files.length) return;
+
+      const title = getBookTitle(files.map(file => file.name));
+      const texts = await Promise.all(files.map(file => file.text()));
+      const rawText = texts.join("\n\n");
+      const chapters = parseChapters(rawText);
+
+      if (!chapters.length) {
+        alert("ไม่พบข้อความในไฟล์ที่เลือก");
+        return;
+      }
+
+      const book = {
+        id: createId(),
+        title,
+        chapters,
+        bookmarks: [],
+        progress: null,
+        createdAt: Date.now()
+      };
+
+      await saveBook(book);
+      event.target.value = "";
+      await renderLibrary();
+      openBook(book.id);
+    });
+
+    document.getElementById("backButton").addEventListener("click", async () => {
+      saveReadingProgress();
+      document.getElementById("readerView").classList.add("hidden");
+      document.getElementById("libraryView").classList.remove("hidden");
+      history.replaceState(null, "", location.pathname);
+      await renderLibrary();
+    });
+
+    document.getElementById("tocButton").addEventListener("click", showTOC);
+    document.getElementById("bookmarkButton").addEventListener("click", addBookmark);
+    document.getElementById("settingsButton").addEventListener("click", showSettings);
+
+    document.getElementById("previousButton").addEventListener("click", () => {
+      if (currentChapterIndex > 0) {
+        currentChapterIndex--;
+        renderCurrentChapter(false);
+      }
+    });
+
+    document.getElementById("nextButton").addEventListener("click", () => {
+      if (currentChapterIndex < currentBook.chapters.length - 1) {
+        currentChapterIndex++;
+        renderCurrentChapter(false);
+      }
+    });
+
+    window.addEventListener("scroll", () => {
+      if (!document.getElementById("readerView").classList.contains("hidden")) {
+        saveReadingProgress();
+      }
+    }, { passive: true });
+
+    window.addEventListener("beforeunload", saveReadingProgress);
+
+    document.getElementById("modal").addEventListener("click", event => {
+      if (event.target.id === "modal") closeModal();
+    });
+
+    async function openFromURL() {
+      const hash = location.hash.slice(1);
+      if (!hash) return;
+
+      const params = new URLSearchParams(hash);
+      if (params.get("book")) {
+        await openBook(params.get("book"), params.get("chapter"));
+      }
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js");
+    }
+
+    renderLibrary().then(openFromURL);
+  </script>
+</body>
+</html>
