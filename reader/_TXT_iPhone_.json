@@ -1,0 +1,10 @@
+{
+  "name": "TXT Reader",
+  "short_name": "TXT Reader",
+  "description": "แอปอ่านไฟล์ TXT แบบเก็บข้อมูลในเครื่อง",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#efe1c4",
+  "theme_color": "#1b1b1b",
+  "lang": "th"
+}
