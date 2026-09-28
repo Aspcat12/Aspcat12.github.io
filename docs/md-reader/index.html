@@ -1,0 +1,1393 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta name="theme-color" content="#f7f4ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MD Reader">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>MD Reader</title>
+
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --paper: #fffdf9;
+      --text: #252525;
+      --muted: #777;
+      --accent: #8b5e3c;
+      --system: #f1eee8;
+      --border: #e4ded4;
+      --code-bg: #f3efe8;
+      --reader-size: 18px;
+      --reader-line-height: 1.85;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #171717;
+      --paper: #202020;
+      --text: #f0ece6;
+      --muted: #b8b1a8;
+      --accent: #d5a476;
+      --system: #2b2926;
+      --border: #3d3934;
+      --code-bg: #292724;
+    }
+
+    body[data-theme="light"] {
+      --bg: #f7f4ee;
+      --paper: #fffdf9;
+      --text: #252525;
+      --muted: #777;
+      --accent: #8b5e3c;
+      --system: #f1eee8;
+      --border: #e4ded4;
+      --code-bg: #f3efe8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Noto Sans Thai",
+        "Leelawadee UI",
+        "Segoe UI",
+        sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =========================
+       Library
+       ========================= */
+
+    .app {
+      width: min(100%, 860px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding:
+        calc(16px + env(safe-area-inset-top))
+        16px
+        calc(30px + env(safe-area-inset-bottom));
+    }
+
+    .topbar-library {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    .app h1 {
+      margin-bottom: 3px;
+      font-size: 25px;
+    }
+
+    .app h2 {
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      margin-bottom: 14px;
+      padding: 16px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 13px;
+      color: #fff;
+      background: var(--accent);
+      border: 0;
+      border-radius: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tool {
+      min-width: 38px;
+      min-height: 34px;
+      padding: 6px 11px;
+      color: var(--text);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 14px;
+    }
+
+    .tool.danger {
+      color: #b42318;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .row.between {
+      justify-content: space-between;
+    }
+
+    .empty {
+      padding: 28px 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .book-row,
+    .toc-item {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+      padding: 13px 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .book-row:last-child,
+    .toc-item:last-child {
+      border-bottom: 0;
+    }
+
+    .book-main {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      text-align: left;
+    }
+
+    .item-title {
+      display: block;
+      margin-bottom: 4px;
+      overflow: hidden;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .item-meta {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .progress {
+      height: 6px;
+      margin-top: 9px;
+      overflow: hidden;
+      background: var(--border);
+      border-radius: 999px;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: inherit;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* =========================
+       Reader
+       ========================= */
+
+    .reader-shell {
+      width: min(100%, 860px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding:
+        calc(28px + env(safe-area-inset-top))
+        clamp(18px, 5vw, 52px)
+        calc(60px + env(safe-area-inset-bottom));
+      background: var(--paper);
+    }
+
+    .reader-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
+      margin:
+        calc(-28px - env(safe-area-inset-top))
+        calc(-1 * clamp(18px, 5vw, 52px))
+        30px;
+
+      padding:
+        calc(12px + env(safe-area-inset-top))
+        clamp(18px, 5vw, 52px)
+        12px;
+
+      background: color-mix(in srgb, var(--paper) 94%, transparent);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .reader-brand {
+      max-width: 35%;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 14px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reader-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* =========================
+       Markdown content
+       ========================= */
+
+    .markdown-content {
+      color: var(--text);
+      font-size: var(--reader-size);
+      line-height: var(--reader-line-height);
+      overflow-wrap: anywhere;
+      text-wrap: pretty;
+    }
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4 {
+      color: var(--text);
+      font-weight: 750;
+      line-height: 1.35;
+      scroll-margin-top: 90px;
+    }
+
+    .markdown-content h1 {
+      margin: 0 0 28px;
+      font-size: clamp(27px, 6vw, 38px);
+    }
+
+    .markdown-content h2 {
+      margin: 52px 0 22px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: clamp(23px, 5vw, 30px);
+    }
+
+    .markdown-content h3 {
+      margin: 38px 0 17px;
+      font-size: clamp(20px, 4vw, 24px);
+    }
+
+    .markdown-content h4 {
+      margin: 28px 0 14px;
+      font-size: 1.05em;
+    }
+
+    .markdown-content p {
+      margin: 0 0 1em;
+    }
+
+    .markdown-content a {
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    .markdown-content strong {
+      font-weight: 750;
+    }
+
+    .markdown-content em {
+      color: var(--muted);
+    }
+
+    .markdown-content hr {
+      height: 1px;
+      margin: 38px 0;
+      background: var(--border);
+      border: 0;
+    }
+
+    .markdown-content blockquote {
+      margin: 1.3em 0;
+      padding: 12px 16px;
+      color: var(--text);
+      background: var(--system);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .markdown-content blockquote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+      margin: 0 0 1.1em;
+      padding-left: 1.45em;
+    }
+
+    .markdown-content li {
+      margin: 0.38em 0;
+      padding-left: 0.15em;
+    }
+
+    .markdown-content code {
+      padding: 0.15em 0.35em;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.83em;
+    }
+
+    .markdown-content pre {
+      margin: 1.3em 0;
+      padding: 14px;
+      overflow-x: auto;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      line-height: 1.55;
+    }
+
+    .markdown-content pre code {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      font-size: 0.82em;
+    }
+
+    .markdown-content table {
+      display: block;
+      width: 100%;
+      margin: 1.3em 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: separate;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.88em;
+    }
+
+    .markdown-content th,
+    .markdown-content td {
+      min-width: 110px;
+      padding: 10px 12px;
+      vertical-align: top;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .markdown-content th {
+      background: var(--system);
+      font-weight: 750;
+    }
+
+    .markdown-content tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .markdown-content th:last-child,
+    .markdown-content td:last-child {
+      border-right: 0;
+    }
+
+    .markdown-content img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 1.5em auto;
+      border-radius: 10px;
+    }
+
+    /* =========================
+       Modal
+       ========================= */
+
+    .modal {
+      position: fixed;
+      z-index: 30;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      background: rgba(0, 0, 0, 0.38);
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-height: 82vh;
+      padding:
+        20px
+        16px
+        calc(20px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      background: var(--bg);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .modal-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    input[type="search"],
+    select {
+      padding: 11px;
+      color: var(--text);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+    }
+
+    input[type="search"] {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .toc-level-1 {
+      font-weight: 750;
+    }
+
+    .toc-level-2 {
+      padding-left: 18px;
+    }
+
+    .toc-level-3 {
+      padding-left: 36px;
+      font-size: 0.92em;
+    }
+
+    @media (max-width: 600px) {
+      .reader-shell {
+        padding-top: calc(20px + env(safe-area-inset-top));
+      }
+
+      .reader-header {
+        margin-top: calc(-20px - env(safe-area-inset-top));
+        margin-bottom: 24px;
+      }
+
+      .reader-brand {
+        max-width: 27%;
+      }
+
+      .markdown-content {
+        font-size: calc(var(--reader-size) - 1px);
+      }
+    }
+  </style>
+</head>
+
+<body data-theme="sepia">
+  <main class="app">
+    <section id="libraryView">
+      <header class="topbar-library">
+        <div>
+          <h1>คลังเอกสาร</h1>
+          <div class="muted">อ่าน Markdown ส่วนกลางและเอกสารส่วนตัว</div>
+        </div>
+
+        <label class="button" for="fileInput">นำเข้า MD</label>
+        <input id="fileInput" type="file" accept=".md,.markdown,text/markdown,text/plain" multiple>
+      </header>
+
+      <div id="libraryContent"></div>
+    </section>
+
+    <section id="readerView" class="hidden">
+      <main class="reader-shell">
+        <header class="reader-header">
+          <div class="reader-brand" id="readerBookTitle">MD Reader</div>
+
+          <div class="reader-controls">
+            <button class="tool" id="backButton">กลับ</button>
+            <button class="tool" id="tocButton">สารบัญ</button>
+            <button class="tool" id="bookmarkButton">คั่น</button>
+            <button class="tool" id="settingsButton">A</button>
+          </div>
+        </header>
+
+        <article class="markdown-content" id="markdownContent"></article>
+      </main>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-panel" id="modalPanel"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+
+  <script>
+    const CATALOG_URL = "./books/catalog.json";
+
+    const DB_NAME = "MarkdownReaderDB";
+    const DB_VERSION = 1;
+    const LOCAL_BOOKS_STORE = "localBooks";
+    const READING_STATE_STORE = "readingState";
+
+    let publicCatalog = [];
+    let currentBook = null;
+    let currentHeadings = [];
+    let saveTimer = null;
+
+    const settings = JSON.parse(
+      localStorage.getItem("markdownReaderSettings") ||
+      JSON.stringify({
+        theme: "sepia",
+        fontSize: 18,
+        lineHeight: 1.85
+      })
+    );
+
+    function applySettings() {
+      document.body.dataset.theme = settings.theme;
+      document.documentElement.style.setProperty("--reader-size", `${settings.fontSize}px`);
+      document.documentElement.style.setProperty("--reader-line-height", settings.lineHeight);
+      localStorage.setItem("markdownReaderSettings", JSON.stringify(settings));
+    }
+
+    applySettings();
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = () => {
+          const db = request.result;
+
+          if (!db.objectStoreNames.contains(LOCAL_BOOKS_STORE)) {
+            db.createObjectStore(LOCAL_BOOKS_STORE, { keyPath: "id" });
+          }
+
+          if (!db.objectStoreNames.contains(READING_STATE_STORE)) {
+            db.createObjectStore(READING_STATE_STORE, { keyPath: "bookId" });
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function dbGetAll(storeName) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const request = db
+          .transaction(storeName, "readonly")
+          .objectStore(storeName)
+          .getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function dbGet(storeName, key) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const request = db
+          .transaction(storeName, "readonly")
+          .objectStore(storeName)
+          .get(key);
+
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function dbPut(storeName, data) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, "readwrite");
+        transaction.objectStore(storeName).put(data);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    async function dbDelete(storeName, key) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(storeName, "readwrite");
+        transaction.objectStore(storeName).delete(key);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    function createId() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function escapeHTML(text = "") {
+      const element = document.createElement("div");
+      element.textContent = text;
+      return element.innerHTML;
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) {
+        return "";
+      }
+
+      return new Intl.DateTimeFormat("th-TH", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(new Date(timestamp));
+    }
+
+    function getProgressPercent(state) {
+      if (!state?.scrollRatio) {
+        return 0;
+      }
+
+      return Math.round(Math.min(Math.max(state.scrollRatio, 0), 1) * 100);
+    }
+
+    function getFirstMarkdownTitle(markdown, fallbackTitle) {
+      const match = markdown.match(/^\s*#\s+(.+?)\s*$/m);
+
+      if (match) {
+        return match[1]
+          .replace(/\*\*/g, "")
+          .replace(/`/g, "")
+          .trim();
+      }
+
+      return fallbackTitle;
+    }
+
+    async function loadPublicCatalog() {
+      try {
+        const response = await fetch(CATALOG_URL, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("ไม่พบไฟล์ catalog.json");
+        }
+
+        const catalog = await response.json();
+
+        if (!Array.isArray(catalog)) {
+          throw new Error("catalog.json ต้องเป็นรายการแบบ array");
+        }
+
+        publicCatalog = catalog.map(book => ({
+          id: `public-${book.id}`,
+          title: book.title || "เอกสารไม่มีชื่อ",
+          language: book.language || "",
+          description: book.description || "",
+          files: Array.isArray(book.files) ? book.files : []
+        }));
+      } catch (error) {
+        console.error(error);
+        publicCatalog = [];
+      }
+    }
+
+    async function loadPublicBook(bookId) {
+      const catalogBook = publicCatalog.find(book => book.id === bookId);
+
+      if (!catalogBook) {
+        throw new Error("ไม่พบเอกสารที่เลือก");
+      }
+
+      if (!catalogBook.files.length) {
+        throw new Error("เอกสารนี้ยังไม่มีไฟล์ Markdown");
+      }
+
+      const catalogBaseURL = new URL(CATALOG_URL, window.location.href);
+
+      const documents = await Promise.all(
+        catalogBook.files.map(async filePath => {
+          const fileURL = new URL(filePath, catalogBaseURL);
+          const response = await fetch(fileURL);
+
+          if (!response.ok) {
+            throw new Error(`โหลดไฟล์ไม่สำเร็จ: ${filePath}`);
+          }
+
+          return response.text();
+        })
+      );
+
+      return {
+        id: catalogBook.id,
+        type: "public",
+        title: catalogBook.title,
+        language: catalogBook.language,
+        markdown: documents.join("\n\n---\n\n")
+      };
+    }
+
+    async function renderLibrary() {
+      const libraryContent = document.getElementById("libraryContent");
+      const localBooks = await dbGetAll(LOCAL_BOOKS_STORE);
+
+      localBooks.sort((a, b) => b.createdAt - a.createdAt);
+
+      const publicStates = await Promise.all(
+        publicCatalog.map(book => dbGet(READING_STATE_STORE, book.id))
+      );
+
+      const localStates = await Promise.all(
+        localBooks.map(book => dbGet(READING_STATE_STORE, book.id))
+      );
+
+      const publicHTML = publicCatalog.length
+        ? publicCatalog.map((book, index) => {
+            const state = publicStates[index];
+            const progress = getProgressPercent(state);
+
+            return `
+              <div class="book-row">
+                <button class="book-main" data-open-public="${book.id}">
+                  <span class="item-title">${escapeHTML(book.title)}</span>
+                  <span class="item-meta">
+                    หนังสือส่วนกลาง
+                    ${book.language ? ` · ${escapeHTML(book.language)}` : ""}
+                    ${book.description ? ` · ${escapeHTML(book.description)}` : ""}
+                    ${state?.updatedAt ? ` · อ่านแล้ว ${progress}%` : ""}
+                  </span>
+                  ${state?.updatedAt ? `
+                    <div class="progress"><span style="width:${progress}%"></span></div>
+                  ` : ""}
+                </button>
+              </div>
+            `;
+          }).join("")
+        : `
+          <div class="empty">
+            ยังไม่มีเอกสารส่วนกลาง<br>
+            ตรวจสอบไฟล์ books/catalog.json
+          </div>
+        `;
+
+      const localHTML = localBooks.length
+        ? localBooks.map((book, index) => {
+            const state = localStates[index];
+            const progress = getProgressPercent(state);
+
+            return `
+              <div class="book-row">
+                <button class="book-main" data-open-local="${book.id}">
+                  <span class="item-title">${escapeHTML(book.title)}</span>
+                  <span class="item-meta">
+                    เอกสารส่วนตัว
+                    ${book.language ? ` · ${escapeHTML(book.language)}` : ""}
+                    ${state?.updatedAt ? ` · อ่านแล้ว ${progress}%` : ""}
+                  </span>
+                  <div class="progress"><span style="width:${progress}%"></span></div>
+                </button>
+
+                <button
+                  class="tool danger"
+                  data-delete-local="${book.id}"
+                  aria-label="ลบเอกสารส่วนตัว"
+                >
+                  ลบ
+                </button>
+              </div>
+            `;
+          }).join("")
+        : `
+          <div class="empty">
+            ยังไม่มีเอกสารส่วนตัว<br>
+            กด “นำเข้า MD” เพื่อเพิ่มไฟล์จากเครื่อง
+          </div>
+        `;
+
+      libraryContent.innerHTML = `
+        <section class="card">
+          <div class="row between">
+            <h2>เอกสารส่วนกลาง</h2>
+            <span class="muted">${publicCatalog.length} รายการ</span>
+          </div>
+          ${publicHTML}
+        </section>
+
+        <section class="card">
+          <div class="row between">
+            <h2>เอกสารส่วนตัว</h2>
+            <span class="muted">${localBooks.length} รายการ</span>
+          </div>
+          ${localHTML}
+        </section>
+      `;
+
+      document.querySelectorAll("[data-open-public]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const buttonText = button.textContent;
+
+          try {
+            button.disabled = true;
+            button.textContent = "กำลังโหลดเอกสาร...";
+
+            currentBook = await loadPublicBook(button.dataset.openPublic);
+            await openReader();
+          } catch (error) {
+            console.error(error);
+            alert(`ไม่สามารถโหลดเอกสารได้\n${error.message}`);
+          } finally {
+            button.disabled = false;
+            button.textContent = buttonText;
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-open-local]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const book = await dbGet(LOCAL_BOOKS_STORE, button.dataset.openLocal);
+
+          if (!book) {
+            alert("ไม่พบเอกสารนี้ในเครื่อง");
+            return;
+          }
+
+          currentBook = {
+            ...book,
+            type: "local"
+          };
+
+          await openReader();
+        });
+      });
+
+      document.querySelectorAll("[data-delete-local]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const confirmed = confirm("ต้องการลบเอกสารส่วนตัวและประวัติการอ่านหรือไม่?");
+
+          if (!confirmed) {
+            return;
+          }
+
+          await dbDelete(LOCAL_BOOKS_STORE, button.dataset.deleteLocal);
+          await dbDelete(READING_STATE_STORE, button.dataset.deleteLocal);
+          await renderLibrary();
+        });
+      });
+    }
+
+    function renderMarkdown(markdown) {
+      if (!window.marked || !window.DOMPurify) {
+        throw new Error("ไม่สามารถโหลดตัวแสดงผล Markdown ได้");
+      }
+
+      const rawHTML = marked.parse(markdown, {
+        gfm: true,
+        breaks: false
+      });
+
+      const safeHTML = DOMPurify.sanitize(rawHTML, {
+        USE_PROFILES: { html: true }
+      });
+
+      const content = document.getElementById("markdownContent");
+      content.innerHTML = safeHTML;
+
+      content.querySelectorAll("a").forEach(link => {
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      });
+
+      currentHeadings = [];
+
+      content.querySelectorAll("h1, h2, h3").forEach((heading, index) => {
+        const id = `section-${index + 1}`;
+        heading.id = id;
+
+        currentHeadings.push({
+          id,
+          level: Number(heading.tagName.slice(1)),
+          text: heading.textContent.trim()
+        });
+      });
+    }
+
+    async function openReader(requestedScrollY = null) {
+      currentBook.readingState = await dbGet(READING_STATE_STORE, currentBook.id);
+
+      document.getElementById("libraryView").classList.add("hidden");
+      document.getElementById("readerView").classList.remove("hidden");
+      document.getElementById("readerBookTitle").textContent = currentBook.title;
+
+      renderMarkdown(currentBook.markdown);
+
+      history.replaceState(
+        null,
+        "",
+        `#book=${encodeURIComponent(currentBook.id)}`
+      );
+
+      setTimeout(() => {
+        const savedScrollY =
+          requestedScrollY !== null
+            ? requestedScrollY
+            : currentBook.readingState?.scrollY || 0;
+
+        window.scrollTo(0, savedScrollY);
+      }, 60);
+
+      saveReadingProgress();
+    }
+
+    function saveReadingProgress() {
+      if (!currentBook) {
+        return;
+      }
+
+      clearTimeout(saveTimer);
+
+      saveTimer = setTimeout(async () => {
+        const maxScroll = Math.max(
+          document.documentElement.scrollHeight - window.innerHeight,
+          1
+        );
+
+        const previousBookmarks = currentBook.readingState?.bookmarks || [];
+
+        currentBook.readingState = {
+          bookId: currentBook.id,
+          scrollY: window.scrollY,
+          scrollRatio: Math.min(window.scrollY / maxScroll, 1),
+          updatedAt: Date.now(),
+          bookmarks: previousBookmarks
+        };
+
+        await dbPut(READING_STATE_STORE, currentBook.readingState);
+      }, 450);
+    }
+
+    function showTOC() {
+      const items = currentHeadings.length
+        ? currentHeadings.map(item => `
+          <button
+            class="toc-item toc-level-${item.level}"
+            data-scroll-to="${item.id}"
+          >
+            ${escapeHTML(item.text)}
+          </button>
+        `).join("")
+        : `<div class="empty">เอกสารนี้ไม่มีหัวข้อสำหรับสร้างสารบัญ</div>`;
+
+      showModal(`
+        <div class="modal-title">
+          <h2>สารบัญ</h2>
+          <button class="tool" data-close-modal>ปิด</button>
+        </div>
+
+        <input id="tocSearch" type="search" placeholder="ค้นหาหัวข้อ">
+        <div id="tocList">${items}</div>
+      `);
+
+      document.querySelectorAll("[data-scroll-to]").forEach(button => {
+        button.addEventListener("click", () => {
+          const target = document.getElementById(button.dataset.scrollTo);
+
+          if (target) {
+            closeModal();
+            target.scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+          }
+        });
+      });
+
+      document.getElementById("tocSearch").addEventListener("input", event => {
+        const keyword = event.target.value.toLowerCase().trim();
+
+        document.querySelectorAll("[data-scroll-to]").forEach(button => {
+          const visible = button.textContent.toLowerCase().includes(keyword);
+          button.classList.toggle("hidden", !visible);
+        });
+      });
+    }
+
+    async function addBookmark() {
+      const note = prompt("เพิ่มโน้ตสำหรับคั่นหน้านี้ (เว้นว่างได้)");
+
+      if (note === null) {
+        return;
+      }
+
+      const bookmarks = currentBook.readingState?.bookmarks || [];
+
+      bookmarks.unshift({
+        id: createId(),
+        scrollY: window.scrollY,
+        note: note.trim(),
+        createdAt: Date.now()
+      });
+
+      currentBook.readingState = {
+        ...(currentBook.readingState || {}),
+        bookId: currentBook.id,
+        bookmarks
+      };
+
+      await dbPut(READING_STATE_STORE, currentBook.readingState);
+      alert("บันทึกคั่นหน้าแล้ว");
+    }
+
+    function showBookmarks() {
+      const bookmarks = currentBook.readingState?.bookmarks || [];
+
+      showModal(`
+        <div class="modal-title">
+          <h2>คั่นหน้า</h2>
+          <button class="tool" data-close-modal>ปิด</button>
+        </div>
+
+        ${
+          bookmarks.length
+            ? bookmarks.map((bookmark, index) => `
+              <button class="toc-item" data-bookmark-index="${index}">
+                <div>
+                  <span class="item-title">
+                    คั่นหน้าที่ ${bookmarks.length - index}
+                  </span>
+                  <span class="item-meta">
+                    ${escapeHTML(bookmark.note || "ไม่มีโน้ต")}
+                    · ${formatDate(bookmark.createdAt)}
+                  </span>
+                </div>
+              </button>
+            `).join("")
+            : `<div class="empty">ยังไม่มีคั่นหน้า</div>`
+        }
+      `);
+
+      document.querySelectorAll("[data-bookmark-index]").forEach(button => {
+        button.addEventListener("click", () => {
+          const bookmark = bookmarks[Number(button.dataset.bookmarkIndex)];
+
+          if (!bookmark) {
+            return;
+          }
+
+          closeModal();
+
+          window.scrollTo({
+            top: bookmark.scrollY || 0,
+            behavior: "smooth"
+          });
+        });
+      });
+    }
+
+    function showSettings() {
+      showModal(`
+        <div class="modal-title">
+          <h2>รูปแบบการอ่าน</h2>
+          <button class="tool" data-close-modal>ปิด</button>
+        </div>
+
+        <div class="settings-row">
+          <span>ธีม</span>
+          <select id="themeSetting">
+            <option value="light">สว่าง</option>
+            <option value="sepia">ซีเปีย</option>
+            <option value="dark">มืด</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <span>ขนาดตัวอักษร</span>
+          <div class="row">
+            <button class="tool" id="fontDown">A−</button>
+            <strong id="fontValue">${settings.fontSize}</strong>
+            <button class="tool" id="fontUp">A+</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <span>ระยะห่างบรรทัด</span>
+          <select id="lineSetting">
+            <option value="1.65">กระชับ</option>
+            <option value="1.85">ปกติ</option>
+            <option value="2.1">โปร่ง</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px">
+          <button class="button" id="showBookmarksButton">
+            ดูคั่นหน้าทั้งหมด
+          </button>
+        </div>
+      `);
+
+      const themeSetting = document.getElementById("themeSetting");
+      const lineSetting = document.getElementById("lineSetting");
+
+      themeSetting.value = settings.theme;
+      lineSetting.value = String(settings.lineHeight);
+
+      themeSetting.addEventListener("change", () => {
+        settings.theme = themeSetting.value;
+        applySettings();
+      });
+
+      lineSetting.addEventListener("change", () => {
+        settings.lineHeight = Number(lineSetting.value);
+        applySettings();
+      });
+
+      document.getElementById("fontDown").addEventListener("click", () => {
+        settings.fontSize = Math.max(15, settings.fontSize - 1);
+        document.getElementById("fontValue").textContent = settings.fontSize;
+        applySettings();
+      });
+
+      document.getElementById("fontUp").addEventListener("click", () => {
+        settings.fontSize = Math.min(28, settings.fontSize + 1);
+        document.getElementById("fontValue").textContent = settings.fontSize;
+        applySettings();
+      });
+
+      document
+        .getElementById("showBookmarksButton")
+        .addEventListener("click", showBookmarks);
+    }
+
+    function showModal(content) {
+      const modal = document.getElementById("modal");
+      const panel = document.getElementById("modalPanel");
+
+      panel.innerHTML = content;
+      modal.classList.remove("hidden");
+
+      const closeButton = panel.querySelector("[data-close-modal]");
+
+      if (closeButton) {
+        closeButton.addEventListener("click", closeModal);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.add("hidden");
+    }
+
+    document.getElementById("fileInput").addEventListener("change", async event => {
+      const files = [...event.target.files];
+
+      if (!files.length) {
+        return;
+      }
+
+      try {
+        const documents = await Promise.all(files.map(file => file.text()));
+        const markdown = documents.join("\n\n---\n\n");
+
+        const defaultTitle = files.length === 1
+          ? getFirstMarkdownTitle(
+              markdown,
+              files[0].name.replace(/\.(md|markdown)$/i, "")
+            )
+          : "เอกสาร Markdown ที่นำเข้า";
+
+        const title = prompt("ตั้งชื่อเอกสารส่วนตัว", defaultTitle);
+
+        if (title === null) {
+          event.target.value = "";
+          return;
+        }
+
+        const language = prompt(
+          "ระบุภาษา เช่น ไทย, English, ไทย / English (เว้นว่างได้)",
+          "ไทย"
+        );
+
+        if (language === null) {
+          event.target.value = "";
+          return;
+        }
+
+        const book = {
+          id: `local-${createId()}`,
+          type: "local",
+          title: title.trim() || "เอกสารไม่มีชื่อ",
+          language: language.trim(),
+          markdown,
+          createdAt: Date.now()
+        };
+
+        await dbPut(LOCAL_BOOKS_STORE, book);
+
+        event.target.value = "";
+        await renderLibrary();
+
+        currentBook = book;
+        await openReader();
+      } catch (error) {
+        console.error(error);
+        alert("นำเข้าไฟล์ Markdown ไม่สำเร็จ");
+      }
+    });
+
+    document.getElementById("backButton").addEventListener("click", async () => {
+      saveReadingProgress();
+
+      document.getElementById("readerView").classList.add("hidden");
+      document.getElementById("libraryView").classList.remove("hidden");
+
+      history.replaceState(null, "", location.pathname);
+
+      await renderLibrary();
+    });
+
+    document.getElementById("tocButton").addEventListener("click", showTOC);
+    document.getElementById("bookmarkButton").addEventListener("click", addBookmark);
+    document.getElementById("settingsButton").addEventListener("click", showSettings);
+
+    document.getElementById("modal").addEventListener("click", event => {
+      if (event.target.id === "modal") {
+        closeModal();
+      }
+    });
+
+    window.addEventListener("scroll", () => {
+      const readerVisible = !document
+        .getElementById("readerView")
+        .classList
+        .contains("hidden");
+
+      if (readerVisible) {
+        saveReadingProgress();
+      }
+    }, { passive: true });
+
+    window.addEventListener("beforeunload", saveReadingProgress);
+
+    async function openFromURL() {
+      const hash = location.hash.slice(1);
+
+      if (!hash.startsWith("book=")) {
+        return;
+      }
+
+      const bookId = decodeURIComponent(hash.replace("book=", ""));
+
+      try {
+        if (bookId.startsWith("public-")) {
+          currentBook = await loadPublicBook(bookId);
+        } else if (bookId.startsWith("local-")) {
+          currentBook = await dbGet(LOCAL_BOOKS_STORE, bookId);
+
+          if (!currentBook) {
+            return;
+          }
+
+          currentBook.type = "local";
+        } else {
+          return;
+        }
+
+        await openReader();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function startApp() {
+      await loadPublicCatalog();
+      await renderLibrary();
+      await openFromURL();
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js");
+      }
+    }
+
+    startApp();
+  </script>
+</body>
+</html>

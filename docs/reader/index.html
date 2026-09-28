@@ -1,0 +1,1612 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <meta name="theme-color" content="#f7f4ee">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TXT Reader">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>TXT Reader</title>
+
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --paper: #fffdf9;
+      --text: #252525;
+      --muted: #777;
+      --accent: #8b5e3c;
+      --system: #f1eee8;
+      --border: #e4ded4;
+      --reader-size: 19px;
+      --reader-line-height: 1.9;
+    }
+
+    body[data-theme="dark"] {
+      --bg: #171717;
+      --paper: #202020;
+      --text: #f0ece6;
+      --muted: #b8b1a8;
+      --accent: #d5a476;
+      --system: #2b2926;
+      --border: #3d3934;
+    }
+
+    body[data-theme="light"] {
+      --bg: #f7f4ee;
+      --paper: #fffdf9;
+      --text: #252525;
+      --muted: #777;
+      --accent: #8b5e3c;
+      --system: #f1eee8;
+      --border: #e4ded4;
+    }
+
+    body[data-theme="sepia"] {
+      --bg: #f7f4ee;
+      --paper: #fffdf9;
+      --text: #252525;
+      --muted: #777;
+      --accent: #8b5e3c;
+      --system: #f1eee8;
+      --border: #e4ded4;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Noto Sans Thai",
+        "Leelawadee UI",
+        "Segoe UI",
+        sans-serif;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* =========================
+       Library
+       ========================= */
+
+    .app {
+      width: min(100%, 820px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding:
+        calc(16px + env(safe-area-inset-top))
+        16px
+        calc(30px + env(safe-area-inset-bottom));
+    }
+
+    .topbar-library {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 3px;
+      font-size: 25px;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      margin-bottom: 14px;
+      padding: 16px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 13px;
+      color: #fff;
+      background: var(--accent);
+      border: 0;
+      border-radius: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .tool {
+      min-width: 38px;
+      min-height: 34px;
+      padding: 6px 11px;
+      color: var(--text);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 14px;
+    }
+
+    .tool.danger {
+      color: #b42318;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .row.between {
+      justify-content: space-between;
+    }
+
+    .empty {
+      padding: 28px 8px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .book-row,
+    .chapter-item {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+      padding: 13px 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .book-row:last-child,
+    .chapter-item:last-child {
+      border-bottom: 0;
+    }
+
+    .book-main {
+      flex: 1;
+      min-width: 0;
+      padding: 0;
+      color: var(--text);
+      background: transparent;
+      border: 0;
+      text-align: left;
+    }
+
+    .item-title {
+      display: block;
+      margin-bottom: 4px;
+      overflow: hidden;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .item-meta {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .progress {
+      height: 6px;
+      margin-top: 9px;
+      overflow: hidden;
+      background: var(--border);
+      border-radius: 999px;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: inherit;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    /* =========================
+       Reader
+       ========================= */
+
+    .reader-shell {
+      width: min(100%, 820px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding:
+        calc(28px + env(safe-area-inset-top))
+        clamp(18px, 5vw, 48px)
+        calc(118px + env(safe-area-inset-bottom));
+      background: var(--paper);
+    }
+
+    .reader-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin:
+        calc(-28px - env(safe-area-inset-top))
+        calc(-1 * clamp(18px, 5vw, 48px))
+        30px;
+      padding:
+        calc(12px + env(safe-area-inset-top))
+        clamp(18px, 5vw, 48px)
+        12px;
+      background: color-mix(in srgb, var(--paper) 94%, transparent);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .reader-brand {
+      max-width: 38%;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 14px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .reader-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .reader-content {
+      color: var(--text);
+      font-size: var(--reader-size);
+      line-height: var(--reader-line-height);
+      text-wrap: pretty;
+      word-break: break-word;
+    }
+
+    .episode-heading,
+    .reader-content .chapter {
+      color: var(--text);
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .episode-heading {
+      margin: 8px 0 28px;
+      font-size: clamp(25px, 6vw, 34px);
+    }
+
+    .reader-content .chapter {
+      margin: 46px 0 28px;
+      font-size: clamp(23px, 5.5vw, 31px);
+    }
+
+    .reader-content p {
+      margin: 0 0 1em;
+      text-align: left;
+      text-indent: 0;
+    }
+
+    .reader-content .system {
+      margin: 1.1em 0;
+      padding: 10px 14px;
+      background: var(--system);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      font-size: 0.92em;
+      line-height: 1.65;
+    }
+
+    .reader-content .marker {
+      width: fit-content;
+      margin: 18px auto;
+      padding: 7px 18px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .reader-content .separator {
+      margin: 34px 0;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.5em;
+    }
+
+    .reader-bottom {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 15;
+      padding:
+        10px
+        16px
+        calc(10px + env(safe-area-inset-bottom));
+      background: color-mix(in srgb, var(--paper) 94%, transparent);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .reader-bottom-inner {
+      display: flex;
+      max-width: 720px;
+      margin: 0 auto;
+      gap: 8px;
+    }
+
+    .nav-button {
+      flex: 1;
+      min-height: 42px;
+      padding: 9px 8px;
+      color: var(--text);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-weight: 650;
+    }
+
+    /* =========================
+       Modal
+       ========================= */
+
+    .modal {
+      position: fixed;
+      z-index: 30;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      background: rgba(0, 0, 0, 0.38);
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-height: 82vh;
+      padding:
+        20px
+        16px
+        calc(20px + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      background: var(--bg);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .modal-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    input[type="search"],
+    select {
+      padding: 11px;
+      color: var(--text);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+    }
+
+    input[type="search"] {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .chapter-number {
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    @media (max-width: 600px) {
+      .reader-shell {
+        padding-top: calc(20px + env(safe-area-inset-top));
+      }
+
+      .reader-header {
+        margin-top: calc(-20px - env(safe-area-inset-top));
+        margin-bottom: 24px;
+      }
+
+      .reader-content .chapter {
+        margin-top: 38px;
+      }
+
+      .reader-brand {
+        max-width: 30%;
+      }
+    }
+  </style>
+</head>
+
+<body data-theme="sepia">
+  <main class="app">
+    <section id="libraryView">
+      <header class="topbar-library">
+        <div>
+          <h1>ชั้นหนังสือ</h1>
+          <div class="muted">หนังสือส่วนกลางและหนังสือส่วนตัว</div>
+        </div>
+
+        <label class="button" for="fileInput">นำเข้า TXT</label>
+        <input id="fileInput" type="file" accept=".txt,text/plain" multiple>
+      </header>
+
+      <div id="libraryContent"></div>
+    </section>
+
+    <section id="readerView" class="hidden">
+      <main class="reader-shell">
+        <header class="reader-header">
+          <div class="reader-brand" id="readerBookTitle">TXT Reader</div>
+
+          <div class="reader-controls">
+            <button class="tool" id="backButton">กลับ</button>
+            <button class="tool" id="tocButton">สารบัญ</button>
+            <button class="tool" id="bookmarkButton">คั่น</button>
+            <button class="tool" id="settingsButton">A</button>
+          </div>
+        </header>
+
+        <article class="reader-content" id="readerContent"></article>
+      </main>
+
+      <footer class="reader-bottom">
+        <div class="reader-bottom-inner">
+          <button class="nav-button" id="previousButton">‹ ตอนก่อน</button>
+          <button class="nav-button" id="nextButton">ตอนถัดไป ›</button>
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="modal">
+    <div class="modal-panel" id="modalPanel"></div>
+  </div>
+
+  <script>
+    /* =========================
+       Configuration
+       ========================= */
+
+    const CATALOG_URL = "./books/catalog.json";
+
+    const DB_NAME = "ThaiTXTReaderDB";
+    const DB_VERSION = 2;
+
+    const LOCAL_BOOKS_STORE = "localBooks";
+    const READING_STATE_STORE = "readingState";
+
+    let publicCatalog = [];
+    let currentBook = null;
+    let currentEpisodeIndex = 0;
+    let saveTimer = null;
+
+    const settings = JSON.parse(
+      localStorage.getItem("readerSettings") ||
+      JSON.stringify({
+        theme: "sepia",
+        fontSize: 19,
+        lineHeight: 1.9
+      })
+    );
+
+    function applySettings() {
+      document.body.dataset.theme = settings.theme;
+      document.documentElement.style.setProperty(
+        "--reader-size",
+        `${settings.fontSize}px`
+      );
+      document.documentElement.style.setProperty(
+        "--reader-line-height",
+        settings.lineHeight
+      );
+
+      localStorage.setItem("readerSettings", JSON.stringify(settings));
+    }
+
+    applySettings();
+
+    /* =========================
+       IndexedDB
+       ========================= */
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = () => {
+          const db = request.result;
+
+          if (!db.objectStoreNames.contains(LOCAL_BOOKS_STORE)) {
+            db.createObjectStore(LOCAL_BOOKS_STORE, { keyPath: "id" });
+          }
+
+          if (!db.objectStoreNames.contains(READING_STATE_STORE)) {
+            db.createObjectStore(READING_STATE_STORE, { keyPath: "bookId" });
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function getAllLocalBooks() {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const request = db
+          .transaction(LOCAL_BOOKS_STORE, "readonly")
+          .objectStore(LOCAL_BOOKS_STORE)
+          .getAll();
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function getLocalBook(id) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const request = db
+          .transaction(LOCAL_BOOKS_STORE, "readonly")
+          .objectStore(LOCAL_BOOKS_STORE)
+          .get(id);
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveLocalBook(book) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(LOCAL_BOOKS_STORE, "readwrite");
+        transaction.objectStore(LOCAL_BOOKS_STORE).put(book);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    async function deleteLocalBook(id) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(LOCAL_BOOKS_STORE, "readwrite");
+        transaction.objectStore(LOCAL_BOOKS_STORE).delete(id);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    async function getReadingState(bookId) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const request = db
+          .transaction(READING_STATE_STORE, "readonly")
+          .objectStore(READING_STATE_STORE)
+          .get(bookId);
+
+        request.onsuccess = () => resolve(request.result || null);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function saveReadingState(state) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(READING_STATE_STORE, "readwrite");
+        transaction.objectStore(READING_STATE_STORE).put(state);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    async function deleteReadingState(bookId) {
+      const db = await openDB();
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(READING_STATE_STORE, "readwrite");
+        transaction.objectStore(READING_STATE_STORE).delete(bookId);
+
+        transaction.oncomplete = () => resolve();
+        transaction.onerror = () => reject(transaction.error);
+      });
+    }
+
+    /* =========================
+       Helpers
+       ========================= */
+
+    function createId() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function escapeHTML(text = "") {
+      const element = document.createElement("div");
+      element.textContent = text;
+      return element.innerHTML;
+    }
+
+    function getProgressPercent(episodes, state) {
+      if (!episodes?.length || !state?.episodeId) {
+        return 0;
+      }
+
+      const index = episodes.findIndex(
+        episode => episode.id === state.episodeId
+      );
+
+      if (index < 0) {
+        return 0;
+      }
+
+      const ratio = Math.min(Math.max(state.scrollRatio || 0, 0), 1);
+
+      return Math.round(((index + ratio) / episodes.length) * 100);
+    }
+
+    function formatDate(timestamp) {
+      if (!timestamp) {
+        return "";
+      }
+
+      return new Intl.DateTimeFormat("th-TH", {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(new Date(timestamp));
+    }
+
+    /* =========================
+       TXT parser
+       ========================= */
+
+    function parseEpisodes(rawText) {
+      const lines = rawText
+        .replace(/\r\n?/g, "\n")
+        .split("\n");
+
+      const episodes = [];
+      let activeEpisode = null;
+      const leadingLines = [];
+
+      /*
+        นับเฉพาะ “ตอนที่” เพื่อใช้กับสารบัญและปุ่มตอนถัดไป
+        ตัวอย่างที่รองรับ:
+        ตอนที่ 250: ชื่อเรื่อง
+        ตอนที่ 250 : ชื่อเรื่อง
+        ตอนที่ 250 ชื่อเรื่อง
+      */
+      const episodePattern = /^\s*ตอนที่\s*(\d+)\s*[:：]?\s*(.*?)\s*$/u;
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        const match = line.match(episodePattern);
+
+        if (match) {
+          const episodeNumber = Number(match[1]);
+
+          /*
+            มีข้อความก่อน “ตอนที่” แรก เช่นไฟล์เริ่มจากท้ายตอน 249
+            แล้วเจอ “ตอนที่ 250”
+          */
+          if (!activeEpisode && leadingLines.join("\n").trim()) {
+            const previousNumber = Math.max(1, episodeNumber - 1);
+
+            episodes.push({
+              id: `episode-${previousNumber}-leading`,
+              number: previousNumber,
+              title: "เนื้อหาต่อจากไฟล์ก่อนหน้า",
+              heading: `ตอนที่ ${previousNumber}: เนื้อหาต่อจากไฟล์ก่อนหน้า`,
+              content: leadingLines.join("\n").trim()
+            });
+
+            leadingLines.length = 0;
+          }
+
+          if (activeEpisode) {
+            activeEpisode.content = activeEpisode.content.join("\n").trim();
+            episodes.push(activeEpisode);
+          }
+
+          activeEpisode = {
+            id: `episode-${episodeNumber}-${episodes.length}`,
+            number: episodeNumber,
+            title: match[2] || `ตอนที่ ${episodeNumber}`,
+            heading: line,
+            content: []
+          };
+
+          continue;
+        }
+
+        if (!activeEpisode) {
+          leadingLines.push(rawLine);
+        } else {
+          activeEpisode.content.push(rawLine);
+        }
+      }
+
+      if (activeEpisode) {
+        activeEpisode.content = activeEpisode.content.join("\n").trim();
+        episodes.push(activeEpisode);
+      }
+
+      if (!episodes.length && rawText.trim()) {
+        episodes.push({
+          id: "episode-1",
+          number: 1,
+          title: "เนื้อหา",
+          heading: "เนื้อหา",
+          content: rawText.trim()
+        });
+      }
+
+      return episodes;
+    }
+
+    function formatEpisodeContent(content) {
+      const lines = content
+        .replace(/\r\n?/g, "\n")
+        .split("\n");
+
+      const parts = [];
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        if (!line) {
+          continue;
+        }
+
+        const escaped = escapeHTML(line);
+
+        /* “บทที่” แสดงเป็นหัวข้อในตอน แต่ไม่อยู่ในสารบัญ */
+        if (/^บทที่\s*\d+\s*[:：]?/u.test(line)) {
+          parts.push(`<h2 class="chapter">${escaped}</h2>`);
+        }
+
+        /* [ข้อความระบบ] */
+        else if (line.startsWith("[") && line.endsWith("]")) {
+          parts.push(`<div class="system">${escaped}</div>`);
+        }
+
+        /* ABCD */
+        else if (/^[A-Za-z]{4}$/.test(line)) {
+          parts.push(`<div class="marker">${escaped}</div>`);
+        }
+
+        /* ....... หรือ ………… */
+        else if (/^[.…]{4,}$/u.test(line)) {
+          parts.push(`<div class="separator">•••</div>`);
+        }
+
+        else {
+          parts.push(`<p>${escaped}</p>`);
+        }
+      }
+
+      return parts.join("\n");
+    }
+
+    /* =========================
+       Public books from GitHub
+       ========================= */
+
+    async function loadPublicCatalog() {
+      try {
+        const response = await fetch(CATALOG_URL, {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error("โหลด catalog.json ไม่สำเร็จ");
+        }
+
+        const catalog = await response.json();
+
+        if (!Array.isArray(catalog)) {
+          throw new Error("catalog.json ต้องเป็นรายการหนังสือ");
+        }
+
+        publicCatalog = catalog.map(book => ({
+          id: `public-${book.id}`,
+          sourceId: book.id,
+          title: book.title || "หนังสือไม่มีชื่อ",
+          files: Array.isArray(book.files) ? book.files : []
+        }));
+      } catch (error) {
+        console.error(error);
+        publicCatalog = [];
+      }
+    }
+
+    async function loadPublicBook(publicId) {
+      const catalogBook = publicCatalog.find(book => book.id === publicId);
+
+      if (!catalogBook) {
+        throw new Error("ไม่พบหนังสือ");
+      }
+
+      if (!catalogBook.files.length) {
+        throw new Error("หนังสือเล่มนี้ยังไม่มีไฟล์ TXT");
+      }
+
+      /*
+        catalog.json อยู่ที่ books/catalog.json
+        ดังนั้นชื่อไฟล์ใน catalog สามารถเขียนแค่:
+        "746part1_แก้ไข.txt"
+        ไม่จำเป็นต้องใส่ "books/" ซ้ำ
+      */
+      const catalogBaseURL = new URL(CATALOG_URL, window.location.href);
+
+      const texts = await Promise.all(
+        catalogBook.files.map(async filePath => {
+          const fileURL = new URL(filePath, catalogBaseURL);
+
+          const response = await fetch(fileURL);
+
+          if (!response.ok) {
+            throw new Error(`โหลดไฟล์ไม่สำเร็จ: ${filePath}`);
+          }
+
+          return response.text();
+        })
+      );
+
+      const episodes = parseEpisodes(texts.join("\n\n"));
+
+      return {
+        id: catalogBook.id,
+        type: "public",
+        title: catalogBook.title,
+        episodes
+      };
+    }
+
+    /* =========================
+       Library rendering
+       ========================= */
+
+    async function renderLibrary() {
+      const libraryContent = document.getElementById("libraryContent");
+      const localBooks = await getAllLocalBooks();
+
+      localBooks.sort((a, b) => b.createdAt - a.createdAt);
+
+      const publicStates = await Promise.all(
+        publicCatalog.map(book => getReadingState(book.id))
+      );
+
+      const publicBooksHTML = publicCatalog.length
+        ? publicCatalog.map((book, index) => {
+            const state = publicStates[index];
+            const latest = state?.episodeNumber
+              ? `ล่าสุด ตอนที่ ${state.episodeNumber}`
+              : "ยังไม่ได้เริ่มอ่าน";
+
+            return `
+              <div class="book-row">
+                <button class="book-main" data-open-public="${book.id}">
+                  <span class="item-title">${escapeHTML(book.title)}</span>
+                  <span class="item-meta">
+                    หนังสือส่วนกลาง · ${latest}
+                    ${state?.updatedAt ? ` · ${formatDate(state.updatedAt)}` : ""}
+                  </span>
+                </button>
+              </div>
+            `;
+          }).join("")
+        : `
+          <div class="empty">
+            ยังไม่มีหนังสือส่วนกลาง<br>
+            ตรวจสอบไฟล์ <strong>books/catalog.json</strong>
+          </div>
+        `;
+
+      const localBooksHTML = localBooks.length
+        ? localBooks.map(book => {
+            const progress = getProgressPercent(book.episodes, book.progress);
+            const latestEpisode = book.episodes.find(
+              episode => episode.id === book.progress?.episodeId
+            );
+
+            return `
+              <div class="book-row">
+                <button class="book-main" data-open-local="${book.id}">
+                  <span class="item-title">${escapeHTML(book.title)}</span>
+                  <span class="item-meta">
+                    ${book.episodes.length} ตอน
+                    ${latestEpisode ? ` · ล่าสุด ตอนที่ ${latestEpisode.number}` : ""}
+                    · อ่านแล้ว ${progress}%
+                  </span>
+                  <div class="progress">
+                    <span style="width:${progress}%"></span>
+                  </div>
+                </button>
+
+                <button
+                  class="tool danger"
+                  data-delete-local="${book.id}"
+                  aria-label="ลบหนังสือส่วนตัว"
+                >
+                  ลบ
+                </button>
+              </div>
+            `;
+          }).join("")
+        : `
+          <div class="empty">
+            ยังไม่มีหนังสือส่วนตัว<br>
+            กด “นำเข้า TXT” เพื่อเพิ่มจากเครื่องของคุณ
+          </div>
+        `;
+
+      libraryContent.innerHTML = `
+        <section class="card">
+          <div class="row between">
+            <h2>หนังสือส่วนกลาง</h2>
+            <span class="muted">${publicCatalog.length} เล่ม</span>
+          </div>
+          ${publicBooksHTML}
+        </section>
+
+        <section class="card">
+          <div class="row between">
+            <h2>หนังสือส่วนตัว</h2>
+            <span class="muted">${localBooks.length} เล่ม</span>
+          </div>
+          ${localBooksHTML}
+        </section>
+      `;
+
+      document.querySelectorAll("[data-open-public]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const originalText = button.textContent;
+          button.disabled = true;
+          button.textContent = "กำลังโหลด...";
+
+          try {
+            currentBook = await loadPublicBook(button.dataset.openPublic);
+            await openReader();
+          } catch (error) {
+            console.error(error);
+            alert(`ไม่สามารถโหลดหนังสือได้\n${error.message}`);
+          } finally {
+            button.disabled = false;
+            button.textContent = originalText;
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-open-local]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const book = await getLocalBook(button.dataset.openLocal);
+
+          if (!book) {
+            alert("ไม่พบหนังสือในเครื่อง");
+            return;
+          }
+
+          currentBook = {
+            ...book,
+            type: "local"
+          };
+
+          await openReader();
+        });
+      });
+
+      document.querySelectorAll("[data-delete-local]").forEach(button => {
+        button.addEventListener("click", async () => {
+          const confirmed = confirm(
+            "ต้องการลบหนังสือส่วนตัวเล่มนี้ รวมถึงประวัติและคั่นหน้าหรือไม่?"
+          );
+
+          if (!confirmed) {
+            return;
+          }
+
+          await deleteLocalBook(button.dataset.deleteLocal);
+          await deleteReadingState(button.dataset.deleteLocal);
+          await renderLibrary();
+        });
+      });
+    }
+
+    /* =========================
+       Reader
+       ========================= */
+
+    async function openReader(requestedEpisodeId = null) {
+      currentBook.readingState = await getReadingState(currentBook.id);
+
+      const targetEpisodeId =
+        requestedEpisodeId ||
+        currentBook.readingState?.episodeId;
+
+      const savedIndex = currentBook.episodes.findIndex(
+        episode => episode.id === targetEpisodeId
+      );
+
+      currentEpisodeIndex = savedIndex >= 0 ? savedIndex : 0;
+
+      document.getElementById("libraryView").classList.add("hidden");
+      document.getElementById("readerView").classList.remove("hidden");
+
+      renderCurrentEpisode(true);
+    }
+
+    function renderCurrentEpisode(restorePosition = false) {
+      const episode = currentBook.episodes[currentEpisodeIndex];
+
+      document.getElementById("readerBookTitle").textContent = currentBook.title;
+
+      document.getElementById("readerContent").innerHTML = `
+        <h1 class="episode-heading" id="${episode.id}">
+          ${escapeHTML(episode.heading)}
+        </h1>
+        ${formatEpisodeContent(episode.content)}
+      `;
+
+      document.getElementById("previousButton").disabled =
+        currentEpisodeIndex === 0;
+
+      document.getElementById("nextButton").disabled =
+        currentEpisodeIndex === currentBook.episodes.length - 1;
+
+      const hash = new URLSearchParams({
+        book: currentBook.id,
+        episode: episode.id
+      });
+
+      history.replaceState(null, "", `#${hash.toString()}`);
+
+      const isLastEpisode =
+        currentBook.readingState?.episodeId === episode.id;
+
+      setTimeout(() => {
+        const scrollY =
+          restorePosition && isLastEpisode
+            ? currentBook.readingState?.scrollY || 0
+            : 0;
+
+        window.scrollTo(0, scrollY);
+      }, 50);
+
+      saveReadingProgress();
+    }
+
+    function saveReadingProgress() {
+      if (!currentBook) {
+        return;
+      }
+
+      clearTimeout(saveTimer);
+
+      saveTimer = setTimeout(async () => {
+        const episode = currentBook.episodes[currentEpisodeIndex];
+
+        const maxScroll = Math.max(
+          document.documentElement.scrollHeight - window.innerHeight,
+          1
+        );
+
+        const newState = {
+          bookId: currentBook.id,
+          episodeId: episode.id,
+          episodeNumber: episode.number,
+          scrollY: window.scrollY,
+          scrollRatio: Math.min(window.scrollY / maxScroll, 1),
+          updatedAt: Date.now(),
+          bookmarks: currentBook.readingState?.bookmarks || []
+        };
+
+        currentBook.readingState = newState;
+
+        /*
+          หนังสือส่วนตัวจะอัปเดต progress ไว้ในข้อมูลเล่มด้วย
+          ส่วนหนังสือส่วนกลางเก็บเฉพาะสถานะการอ่านในเครื่อง
+        */
+        if (currentBook.type === "local") {
+          currentBook.progress = {
+            episodeId: newState.episodeId,
+            scrollY: newState.scrollY,
+            scrollRatio: newState.scrollRatio,
+            updatedAt: newState.updatedAt
+          };
+
+          await saveLocalBook(currentBook);
+        }
+
+        await saveReadingState(newState);
+      }, 500);
+    }
+
+    /* =========================
+       Table of contents
+       ========================= */
+
+    function showTOC() {
+      const list = currentBook.episodes.map((episode, index) => `
+        <button class="chapter-item" data-episode-index="${index}">
+          <div>
+            <span class="item-title">
+              <span class="chapter-number">ตอนที่ ${episode.number}</span>
+              ${episode.title ? `: ${escapeHTML(episode.title)}` : ""}
+            </span>
+            <span class="item-meta">
+              ${episode.id === currentBook.readingState?.episodeId
+                ? "กำลังอ่านล่าสุด"
+                : ""
+              }
+            </span>
+          </div>
+        </button>
+      `).join("");
+
+      showModal(`
+        <div class="modal-title">
+          <h2>สารบัญ</h2>
+          <button class="tool" data-close-modal>ปิด</button>
+        </div>
+
+        <input
+          id="episodeSearch"
+          type="search"
+          placeholder="ค้นหาเลขตอน หรือชื่อเรื่อง"
+        >
+
+        <div id="episodeList">${list}</div>
+      `);
+
+      document.querySelectorAll("[data-episode-index]").forEach(button => {
+        button.addEventListener("click", () => {
+          currentEpisodeIndex = Number(button.dataset.episodeIndex);
+          closeModal();
+          renderCurrentEpisode(false);
+        });
+      });
+
+      document.getElementById("episodeSearch").addEventListener("input", event => {
+        const keyword = event.target.value.toLowerCase().trim();
+
+        document.querySelectorAll("[data-episode-index]").forEach(button => {
+          const visible = button.textContent.toLowerCase().includes(keyword);
+          button.classList.toggle("hidden", !visible);
+        });
+      });
+    }
+
+    /* =========================
+       Bookmarks
+       ========================= */
+
+    async function addBookmark() {
+      const note = prompt("เพิ่มโน้ตสำหรับคั่นหน้านี้ (เว้นว่างได้)");
+
+      if (note === null) {
+        return;
+      }
+
+      const episode = currentBook.episodes[currentEpisodeIndex];
+
+      const maxScroll = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1
+      );
+
+      const bookmarks = currentBook.readingState?.bookmarks || [];
+
+      bookmarks.unshift({
+        id: createId(),
+        episodeId: episode.id,
+        episodeNumber: episode.number,
+        episodeTitle: episode.title,
+        scrollY: window.scrollY,
+        scrollRatio: window.scrollY / maxScroll,
+        note: note.trim(),
+        createdAt: Date.now()
+      });
+
+      currentBook.readingState = {
+        ...(currentBook.readingState || {}),
+        bookId: currentBook.id,
+        bookmarks
+      };
+
+      await saveReadingState(currentBook.readingState);
+      alert("บันทึกคั่นหน้าแล้ว");
+    }
+
+    function showBookmarks() {
+      const bookmarks = currentBook.readingState?.bookmarks || [];
+
+      showModal(`
+        <div class="modal-title">
+          <h2>คั่นหน้า</h2>
+          <button class="tool" data-close-modal>ปิด</button>
+        </div>
+
+        ${
+          bookmarks.length
+            ? bookmarks.map(bookmark => `
+              <button class="chapter-item" data-bookmark-id="${bookmark.id}">
+                <div>
+                  <span class="item-title">
+                    ตอนที่ ${bookmark.episodeNumber}
+                    ${bookmark.episodeTitle
+                      ? `: ${escapeHTML(bookmark.episodeTitle)}`
+                      : ""
+                    }
+                  </span>
+                  <span class="item-meta">
+                    ${escapeHTML(bookmark.note || "ไม่มีโน้ต")}
+                  </span>
+                </div>
+              </button>
+            `).join("")
+            : `<div class="empty">ยังไม่มีคั่นหน้า</div>`
+        }
+      `);
+
+      document.querySelectorAll("[data-bookmark-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          const bookmark = bookmarks.find(
+            item => item.id === button.dataset.bookmarkId
+          );
+
+          if (!bookmark) {
+            return;
+          }
+
+          const index = currentBook.episodes.findIndex(
+            episode => episode.id === bookmark.episodeId
+          );
+
+          if (index < 0) {
+            return;
+          }
+
+          currentEpisodeIndex = index;
+          closeModal();
+          renderCurrentEpisode(false);
+
+          setTimeout(() => {
+            window.scrollTo(0, bookmark.scrollY || 0);
+          }, 70);
+        });
+      });
+    }
+
+    /* =========================
+       Settings
+       ========================= */
+
+    function showSettings() {
+      showModal(`
+        <div class="modal-title">
+          <h2>รูปแบบการอ่าน</h2>
+          <button class="tool" data-close-modal>ปิด</button>
+        </div>
+
+        <div class="settings-row">
+          <span>ธีม</span>
+          <select id="themeSetting">
+            <option value="light">สว่าง</option>
+            <option value="sepia">ซีเปีย</option>
+            <option value="dark">มืด</option>
+          </select>
+        </div>
+
+        <div class="settings-row">
+          <span>ขนาดตัวอักษร</span>
+          <div class="row">
+            <button class="tool" id="fontDown">A−</button>
+            <strong id="fontValue">${settings.fontSize}</strong>
+            <button class="tool" id="fontUp">A+</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <span>ระยะห่างบรรทัด</span>
+          <select id="lineSetting">
+            <option value="1.7">กระชับ</option>
+            <option value="1.9">ปกติ</option>
+            <option value="2.2">โปร่ง</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px">
+          <button class="button" id="showBookmarksButton">
+            ดูคั่นหน้าทั้งหมด
+          </button>
+        </div>
+      `);
+
+      const themeSetting = document.getElementById("themeSetting");
+      const lineSetting = document.getElementById("lineSetting");
+
+      themeSetting.value = settings.theme;
+      lineSetting.value = String(settings.lineHeight);
+
+      themeSetting.addEventListener("change", () => {
+        settings.theme = themeSetting.value;
+        applySettings();
+      });
+
+      lineSetting.addEventListener("change", () => {
+        settings.lineHeight = Number(lineSetting.value);
+        applySettings();
+      });
+
+      document.getElementById("fontDown").addEventListener("click", () => {
+        settings.fontSize = Math.max(16, settings.fontSize - 1);
+        document.getElementById("fontValue").textContent = settings.fontSize;
+        applySettings();
+      });
+
+      document.getElementById("fontUp").addEventListener("click", () => {
+        settings.fontSize = Math.min(28, settings.fontSize + 1);
+        document.getElementById("fontValue").textContent = settings.fontSize;
+        applySettings();
+      });
+
+      document
+        .getElementById("showBookmarksButton")
+        .addEventListener("click", showBookmarks);
+    }
+
+    /* =========================
+       Modal
+       ========================= */
+
+    function showModal(content) {
+      const modal = document.getElementById("modal");
+      const panel = document.getElementById("modalPanel");
+
+      panel.innerHTML = content;
+      modal.classList.remove("hidden");
+
+      const closeButton = panel.querySelector("[data-close-modal]");
+
+      if (closeButton) {
+        closeButton.addEventListener("click", closeModal);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("modal").classList.add("hidden");
+    }
+
+    /* =========================
+       Events
+       ========================= */
+
+    document.getElementById("fileInput").addEventListener("change", async event => {
+      const files = [...event.target.files];
+
+      if (!files.length) {
+        return;
+      }
+
+      const defaultTitle = files.length === 1
+        ? files[0].name.replace(/\.[^/.]+$/, "")
+        : "นิยายที่นำเข้า";
+
+      const title = prompt("ตั้งชื่อหนังสือส่วนตัว", defaultTitle);
+
+      if (title === null) {
+        event.target.value = "";
+        return;
+      }
+
+      try {
+        const texts = await Promise.all(files.map(file => file.text()));
+        const episodes = parseEpisodes(texts.join("\n\n"));
+
+        if (!episodes.length) {
+          alert("ไม่พบข้อความในไฟล์ที่เลือก");
+          return;
+        }
+
+        const book = {
+          id: `local-${createId()}`,
+          type: "local",
+          title: title.trim() || "หนังสือไม่มีชื่อ",
+          episodes,
+          progress: null,
+          createdAt: Date.now()
+        };
+
+        await saveLocalBook(book);
+        event.target.value = "";
+
+        await renderLibrary();
+
+        currentBook = book;
+        await openReader();
+      } catch (error) {
+        console.error(error);
+        alert("นำเข้าไฟล์ไม่สำเร็จ");
+      }
+    });
+
+    document.getElementById("backButton").addEventListener("click", async () => {
+      saveReadingProgress();
+
+      document.getElementById("readerView").classList.add("hidden");
+      document.getElementById("libraryView").classList.remove("hidden");
+
+      history.replaceState(null, "", location.pathname);
+
+      await renderLibrary();
+    });
+
+    document.getElementById("tocButton").addEventListener("click", showTOC);
+    document.getElementById("bookmarkButton").addEventListener("click", addBookmark);
+    document.getElementById("settingsButton").addEventListener("click", showSettings);
+
+    document.getElementById("previousButton").addEventListener("click", () => {
+      if (currentEpisodeIndex <= 0) {
+        return;
+      }
+
+      currentEpisodeIndex--;
+      renderCurrentEpisode(false);
+    });
+
+    document.getElementById("nextButton").addEventListener("click", () => {
+      if (currentEpisodeIndex >= currentBook.episodes.length - 1) {
+        return;
+      }
+
+      currentEpisodeIndex++;
+      renderCurrentEpisode(false);
+    });
+
+    document.getElementById("modal").addEventListener("click", event => {
+      if (event.target.id === "modal") {
+        closeModal();
+      }
+    });
+
+    window.addEventListener("scroll", () => {
+      const readerVisible = !document
+        .getElementById("readerView")
+        .classList
+        .contains("hidden");
+
+      if (readerVisible) {
+        saveReadingProgress();
+      }
+    }, { passive: true });
+
+    window.addEventListener("beforeunload", saveReadingProgress);
+
+    /* =========================
+       Open shared URL
+       ========================= */
+
+    async function openFromURL() {
+      const hash = location.hash.slice(1);
+
+      if (!hash) {
+        return;
+      }
+
+      const params = new URLSearchParams(hash);
+      const bookId = params.get("book");
+      const episodeId = params.get("episode");
+
+      if (!bookId) {
+        return;
+      }
+
+      try {
+        if (bookId.startsWith("public-")) {
+          currentBook = await loadPublicBook(bookId);
+        } else if (bookId.startsWith("local-")) {
+          currentBook = await getLocalBook(bookId);
+          if (!currentBook) {
+            return;
+          }
+
+          currentBook.type = "local";
+        } else {
+          return;
+        }
+
+        await openReader(episodeId);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    /* =========================
+       Start app
+       ========================= */
+
+    async function startApp() {
+      await loadPublicCatalog();
+      await renderLibrary();
+      await openFromURL();
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js");
+      }
+    }
+
+    startApp();
+  </script>
+</body>
+</html>
